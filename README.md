@@ -2,6 +2,9 @@ jsonlang
 ========
 JSONLang is the most retarded scripting language ever intended for actual use.
 
+Language specification:
+- I like turtles.
+
 Some fun facts:
 - Pure Go.
 - No loops, ifs, function calls, only ASM-like jumps.
@@ -84,4 +87,11 @@ We add "[[" to the beginning and "]]" to the end, run it trough jsonlint.org:
 ```
 
 And we can use json.Unmarshal to decode our primitive language into a primitive AST.
+
 Thank you for watching Useless Projects TV and don't forget to watch all the commercials, because taking a piss while they run is like robbing the cable company.
+
+Oh, and by the way the above source code outputs:
+```
+22
+map[val:true]
+```
