@@ -14,25 +14,25 @@ const(
 	Parens = true		// println($x) vs println, $x
 )
 
-type Node struct {
+type node struct {
 	Text 		string
 	Inside 		bool		// Inside regexp find, means IsString here.
 }
 
 // TODO: Very similar to what is in the package opesun/require, maybe we could use that here.
-func Split(src string, pos [][]int) []Node {
-	sl := []Node{}
+func split(src string, pos [][]int) []node {
+	sl := []node{}
 	last := 0
 	for _, v := range pos {
-		sl = append(sl, Node{src[last:v[0]], false})
-		sl = append(sl, Node{src[v[0]:v[1]], true})
+		sl = append(sl, node{src[last:v[0]], false})
+		sl = append(sl, node{src[v[0]:v[1]], true})
 		last = v[1]
 	}
-	sl = append(sl, Node{src[last:], false})
+	sl = append(sl, node{src[last:], false})
 	return sl
 }
 
-func Quote(src []Node) error {
+func quote(src []node) error {
 	for i, v := range src {
 		if !v.Inside { continue }
 		non_string_const := false
@@ -55,7 +55,7 @@ func Quote(src []Node) error {
 	return nil
 }
 
-func Join(src []Node) string {
+func join(src []node) string {
 	s := []string{}
 	for _, v := range src {
 		s = append(s, v.Text)
@@ -66,10 +66,10 @@ func Join(src []Node) string {
 func Compile(src string) ([]interface{}, error) {
 	r := regexp.MustCompile("[$&a-zA-Z._]+")
 	pos := r.FindAllIndex([]byte(src), -1)
-	s := Split(src, pos)
-	err := Quote(s)
+	s := split(src, pos)
+	err := quote(s)
 	if err != nil { return nil, err }
-	src = Join(s)
+	src = join(s)
 	src = strings.Replace(src, ";", "],[", -1)
 	if Parens {
 		src = strings.Replace(src, "(", ", ", -1)
@@ -88,14 +88,6 @@ func Compile(src string) ([]interface{}, error) {
 	return sl, nil
 }
 
-func print(a ...interface{}) {
-	fmt.Print(a...)
-}
-
-func println(a ...interface{}) {
-	fmt.Println(a...)
-}
-
 type Ref struct {
 	vars 	map[string]interface{}
 	name	string
@@ -103,6 +95,12 @@ type Ref struct {
 
 func (r Ref) Derefer() interface{} {
 	val, _ := jsonp.Get(r.vars, r.name)
+	return val
+}
+
+func (r Ref) DereferStrict() interface{} {
+	val, ok := jsonp.Get(r.vars, r.name)
+	if !ok { panic(r.name + " is undefined.") }
 	return val
 }
 
@@ -177,17 +175,6 @@ func evalArgs(a []interface{}, vars map[string]interface{}) []interface{} {
 	return ret
 }
 
-func set(a ...interface{}) {
-	if len(a) < 2 { panic("Too few arguments to set.") }
-	val, ok := a[0].(Ref)
-	if !ok { panic("You can not set a nonreference.") }
-	val.Set(a[1])
-}
-
-func jump_if(i *int, val interface{}, label interface{}, labels map[string]int, negate bool) {
-	
-}
-
 func Interpret(src []interface{}, vars map[string]interface{}, funcs map[string]func(...interface{})) (err error) {
 	if vars == nil {
 		vars = map[string]interface{}{}
@@ -211,18 +198,44 @@ func Interpret(src []interface{}, vars map[string]interface{}, funcs map[string]
 		func_name := val[0].(string)[1:]
 		args := evalArgs(val[1:], vars)
 		switch func_name {
-		case "print":
-			print(args...)
-		case "println":
-			println(args...)
+		case "ret_if":
+			if ret_if(args...) { return nil }
+		case "ret_ifn":
+			if ret_ifn(args...) { return nil }
 		case "label":
-			labels[args[0].(string)] = i
+			label(labels, i, args...)
 		case "jump_if":
 			jump_if(&i, args[0], args[1], labels, false)
 		case "jump_ifn":
 			jump_if(&i, args[0], args[1], labels, true)
+		// Following functions need no special treatment, they could be implemented as user supplied functions too.
+		// You can delete them out if you want, they are included for convenience only.
+		case "exists":
+			exists(args...)
+		case "all_exists":
+			all_exists(args...)
+		case "any_exists":
+			any_exists(args...)
+		case "none_exists":
+			none_exists(args...)
 		case "set":
 			set(args...)
+		case "print":
+			print(args...)
+		case "println":
+			println(args...)
+		case "err_if":
+			err_if(args...)
+		case "push":
+			push(args...)
+		case "set_slice_index":
+			set_slice_index(args...)
+		case "set_map_key":
+			set_map_key(args...)
+		case "delete_map_key":
+			delete_map_key(args...)
+		case "slice":
+			slice(args...)
 		default:
 			if function, has := funcs[func_name]; has {
 				function(args...)
