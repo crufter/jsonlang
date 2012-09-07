@@ -1,22 +1,22 @@
 package jsonlang
 
-import(
+import (
 	"encoding/json"
-	"github.com/opesun/jsonp"
-	"regexp"
 	"fmt"
-	"strings"
+	"github.com/opesun/jsonp"
 	"reflect"
+	"regexp"
+	"strings"
 )
 
-const(
+const (
 	Marker = "."
-	Parens = true		// println($x) vs println, $x
+	Parens = true // println($x) vs println, $x
 )
 
 type node struct {
-	Text 		string
-	Inside 		bool		// Inside regexp find, means IsString here.
+	Text   string
+	Inside bool // Inside regexp find, means IsString here.
 }
 
 // TODO: Very similar to what is in the package opesun/require, maybe we could use that here.
@@ -34,7 +34,9 @@ func split(src string, pos [][]int) []node {
 
 func quote(src []node) error {
 	for i, v := range src {
-		if !v.Inside { continue }
+		if !v.Inside {
+			continue
+		}
 		non_string_const := false
 		if i == 0 {
 			non_string_const = true
@@ -68,7 +70,9 @@ func Compile(src string) ([]interface{}, error) {
 	pos := r.FindAllIndex([]byte(src), -1)
 	s := split(src, pos)
 	err := quote(s)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	src = join(s)
 	src = strings.Replace(src, ";", "],[", -1)
 	if Parens {
@@ -79,7 +83,9 @@ func Compile(src string) ([]interface{}, error) {
 	//fmt.Println(src)
 	var v interface{}
 	err = json.Unmarshal([]byte(src), &v)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	sl := v.([]interface{})
 	l := len(sl)
 	if len(sl[l-1].([]interface{})) == 0 {
@@ -89,8 +95,8 @@ func Compile(src string) ([]interface{}, error) {
 }
 
 type Ref struct {
-	vars 	map[string]interface{}
-	name	string
+	vars map[string]interface{}
+	name string
 }
 
 func (r Ref) Derefer() interface{} {
@@ -100,7 +106,9 @@ func (r Ref) Derefer() interface{} {
 
 func (r Ref) DereferStrict() interface{} {
 	val, ok := jsonp.Get(r.vars, r.name)
-	if !ok { panic(r.name + " is undefined.") }
+	if !ok {
+		panic(r.name + " is undefined.")
+	}
 	return val
 }
 
@@ -136,13 +144,13 @@ func eval_rec(i interface{}, vars map[string]interface{}, nested bool) interface
 	switch val := i.(type) {
 	case string:
 		if string(val[0]) == Marker {
-			if string(val[1]) == "&" {		// Reference
+			if string(val[1]) == "&" { // Reference
 				if nested {
 					panic("Can't interpret reference in map or slice.")
 				} else {
 					return Ref{vars, string(val[2:])}
 				}
-			} else {						// Variable
+			} else { // Variable
 				val, _ := jsonp.Get(vars, val[1:])
 				return val
 			}
@@ -191,17 +199,23 @@ func Interpret(src []interface{}, vars map[string]interface{}, funcs map[string]
 	i := 0
 	labels := map[string]int{}
 	l := len(src)
-	for ;i<l; {
+	for i < l {
 		v := src[i]
 		val := v.([]interface{})
-		if len(val) == 0 { panic("Empty operation.") }
+		if len(val) == 0 {
+			panic("Empty operation.")
+		}
 		func_name := val[0].(string)[1:]
 		args := evalArgs(val[1:], vars)
 		switch func_name {
 		case "ret_if":
-			if ret_if(args...) { return nil }
+			if ret_if(args...) {
+				return nil
+			}
 		case "ret_ifn":
-			if ret_ifn(args...) { return nil }
+			if ret_ifn(args...) {
+				return nil
+			}
 		case "label":
 			label(labels, i, args...)
 		case "jump_if":

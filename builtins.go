@@ -1,6 +1,6 @@
 package jsonlang
 
-import(
+import (
 	"fmt"
 	"strings"
 )
@@ -34,7 +34,9 @@ func label(labels map[string]int, i int, args ...interface{}) {
 func set(a ...interface{}) {
 	argCount("set", 2, a...)
 	val, ok := a[0].(Ref)
-	if !ok { panic("You can not set a nonreference.") }
+	if !ok {
+		panic("You can not set a nonreference.")
+	}
 	val.Set(a[1])
 }
 
@@ -42,20 +44,28 @@ func set(a ...interface{}) {
 // Special builtin.
 func jump_if(i *int, val interface{}, label interface{}, labels map[string]int, negate bool) {
 	verdict := val.(bool) == true
-	if negate { verdict = !verdict }
+	if negate {
+		verdict = !verdict
+	}
 	if verdict {
 		*i = labels[label.(string)]
 	}
 }
 
 func prepareEx(s string, a ...interface{}) Ref {
-	if len(a) < 2 { panic(fmt.Sprintf("Not enough args for %v exists.", s)) }
+	if len(a) < 2 {
+		panic(fmt.Sprintf("Not enough args for %v exists.", s))
+	}
 	for _, v := range a {
 		_, ok := v.(Ref)
-		if ! ok { panic(fmt.Sprintf("All args must be Refs at %v exists.", s)) }
+		if !ok {
+			panic(fmt.Sprintf("All args must be Refs at %v exists.", s))
+		}
 	}
 	ref, ok := a[0].(Ref)
-	if !ok { panic(fmt.Sprintf("Result is not a reference at %v exists.", s)) }
+	if !ok {
+		panic(fmt.Sprintf("Result is not a reference at %v exists.", s))
+	}
 	return ref
 }
 
@@ -73,7 +83,10 @@ func exists(a ...interface{}) {
 func any_exists(a ...interface{}) {
 	ref := prepareEx("any", a...)
 	for _, v := range a[1:] {
-		if v.(Ref).Exists() { ref.Set(true); return }
+		if v.(Ref).Exists() {
+			ref.Set(true)
+			return
+		}
 	}
 	ref.Set(false)
 }
@@ -83,7 +96,10 @@ func any_exists(a ...interface{}) {
 func none_exists(a ...interface{}) {
 	ref := prepareEx("none", a...)
 	for _, v := range a[1:] {
-		if v.(Ref).Exists() { ref.Set(false); return }
+		if v.(Ref).Exists() {
+			ref.Set(false)
+			return
+		}
 	}
 	ref.Set(true)
 }
@@ -93,7 +109,10 @@ func none_exists(a ...interface{}) {
 func all_exists(a ...interface{}) {
 	ref := prepareEx("all", a...)
 	for _, v := range a[1:] {
-		if !v.(Ref).Exists() { ref.Set(false); return }
+		if !v.(Ref).Exists() {
+			ref.Set(false)
+			return
+		}
 	}
 	ref.Set(true)
 }
@@ -103,8 +122,12 @@ func all_exists(a ...interface{}) {
 // Panics with converting to and joining to string all panic_msgs.
 func err_if(a ...interface{}) {
 	verdict, is_bool := a[0].(bool)
-	if !is_bool { return }
-	if !verdict { return }
+	if !is_bool {
+		return
+	}
+	if !verdict {
+		return
+	}
 	sl := []string{}
 	for _, v := range a[1:] {
 		sl = append(sl, fmt.Sprint(v))
@@ -123,18 +146,24 @@ func println(a ...interface{}) {
 
 func firstRef(func_name string, a ...interface{}) Ref {
 	ref, ok := a[0].(Ref)
-	if !ok { panic("First argument must be a Reference at " + func_name) }
+	if !ok {
+		panic("First argument must be a Reference at " + func_name)
+	}
 	return ref
 }
 
 // Helper function.
 func minArgs(func_name string, count int, a ...interface{}) {
-	if len(a) < count { panic(fmt.Sprint("%v must be called with at least %v args.", func_name, count)) }
+	if len(a) < count {
+		panic(fmt.Sprint("%v must be called with at least %v args.", func_name, count))
+	}
 }
 
 // Helper function.
 func argCount(func_name string, count int, a ...interface{}) {
-	if len(a) != count { panic(fmt.Sprint("%v must be called with %v args.", func_name, count)) }
+	if len(a) != count {
+		panic(fmt.Sprint("%v must be called with %v args.", func_name, count))
+	}
 }
 
 // push(&slice, val1, val2, ...)
