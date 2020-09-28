@@ -1,6 +1,6 @@
 jsonlang
 ========
-JSONLang is the most retarded scripting language ever intended for actual use.
+JSONLang is the silliest scripting language ever intended for actual use.
 
 Language specification:
 - I like turtles.
